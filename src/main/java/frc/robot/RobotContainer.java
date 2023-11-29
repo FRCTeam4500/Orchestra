@@ -1,81 +1,51 @@
 package frc.robot;
 
-import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.subsystems.messaging.MessagingSystem;
-import frc.robot.subsystems.swerve.SwerveDrive;
-import frc.robot.subsystems.swerve.TeleopDriveCommand;
 
 public class RobotContainer {
-	private CommandXboxController xbox;
-	private SwerveDrive swerve;
-	private MessagingSystem messaging;
-	private Command autoCommand;
-	private SendableChooser<Command> autonChooser;
-
-	private final int DRIVER_PORT = 2;
+    private CommandXboxController xbox;
+    private OrchestraCommand orchestraCommand;
+    private SendableChooser<String> songSelector;
 
 	public RobotContainer() {
-		swerve = SwerveDrive.getInstance();
-		messaging = MessagingSystem.getInstance();
-		setupAuto();
-		setupDriveController();
-	}
+        xbox = new CommandXboxController(2);
+        setupSongSelection();
+        setupOrchestra(2, 3, 4, 5, 6, 7, 8, 9);
+    }
 
-	public void setupAuto() {
-		autonChooser = new SendableChooser<Command>();
-		autonChooser.setDefaultOption("No Auto", null);
-		Shuffleboard.getTab("Display").add("Auto Route", autonChooser);
-	}
+    public void setupOrchestra(int... motorIDs) {
+        orchestraCommand = new OrchestraCommand(
+            motorIDs
+        );
 
-	public void setupDriveController() {
-		xbox = new CommandXboxController(DRIVER_PORT);
-		TeleopDriveCommand swerveCommand = new TeleopDriveCommand(xbox);
-		swerve.setDefaultCommand(swerveCommand);
+        xbox.start().onTrue(orchestraCommand);
 
-		Trigger switchDriveModeButton = xbox.x();
-		Trigger resetGyroButton = xbox.a();
-		Trigger alignToTargetButton = xbox.rightBumper();
-		Trigger slowModeButton = xbox.leftBumper();
-		Trigger cancelationButton = xbox.start();
+        xbox.a().onTrue(Commands.runOnce(
+            () -> orchestraCommand.changeSong(songSelector.getSelected())
+        ));
 
-		switchDriveModeButton.toggleOnTrue(swerveCommand.toggleRobotCentricCommand());
-		resetGyroButton.onTrue(swerveCommand.resetGyroCommand());
-		slowModeButton.whileTrue(swerveCommand.toggleSlowModeCommand());
-		alignToTargetButton.whileTrue(swerveCommand.toggleAlignToAngleCommand());
-		cancelationButton.onTrue(Commands.runOnce(() -> CommandScheduler.getInstance().cancelAll()));
-	}
+        xbox.y().onTrue(Commands.runOnce(
+            () -> orchestraCommand.stop()
+        ));
+    }
 
-
-	public Command rumbleCommand(double timeSeconds) {
-		return Commands.startEnd(
-			() -> xbox.getHID().setRumble(RumbleType.kBothRumble, 0.5),
-			() -> xbox.getHID().setRumble(RumbleType.kBothRumble, 0)
-		).withTimeout(timeSeconds);
-	}
-
-	public void autonomousInit() {
-		messaging.setMessagingState(true);
-		messaging.addMessage("Auto Started");
-		autoCommand = autonChooser.getSelected();
-		if (autoCommand != null) {
-			autoCommand.schedule();
-		} else {
-			messaging.addMessage("No Auto Command Selected");
-		}
-	}
-
-	public void teleopInit() {
-		messaging.setMessagingState(true);
-		messaging.addMessage("Teleop Started");
-		if (autoCommand != null) {
-			autoCommand.cancel();
-		}
-	}
+    public void setupSongSelection() {
+        songSelector = new SendableChooser<String>();
+        songSelector.setDefaultOption("Output", "output.chrp");
+        songSelector.addOption("Song 1", "song1.chrp");
+        songSelector.addOption("Song 2", "song2.chrp");
+        songSelector.addOption("Song 3", "song3.chrp");
+        songSelector.addOption("Song 4", "song4.chrp");
+        songSelector.addOption("Song 5", "song5.chrp");
+        songSelector.addOption("Song 6", "song6.chrp");
+        songSelector.addOption("Song 7", "song7.chrp");
+        songSelector.addOption("Song 8", "song8.chrp");
+        songSelector.addOption("Song 9", "song9.chrp");
+        songSelector.addOption("Song 10", "song10.chrp");
+        songSelector.addOption("Song 11", "song11.chrp");
+        Shuffleboard.getTab("Song Selection Screen").add("Song Selector", songSelector);
+    }
 }
