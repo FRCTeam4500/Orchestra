@@ -1,6 +1,10 @@
 package frc.robot;
 
 import java.io.FilenameFilter;
+
+import com.ctre.phoenix.motorcontrol.can.TalonFX;
+import com.ctre.phoenix.music.Orchestra;
+
 import java.io.File;
 
 import edu.wpi.first.wpilibj.Filesystem;
@@ -11,7 +15,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 public class RobotContainer {
     private CommandXboxController xbox;
-    private OrchestraCommand orchestraCommand;
     private SendableChooser<String> songSelector;
 
 	public RobotContainer() {
@@ -43,16 +46,22 @@ public class RobotContainer {
 
     private void setupOrchestra(int... motorIDs) {
         xbox = new CommandXboxController(2);
-        orchestraCommand = new OrchestraCommand(motorIDs);
-
-        xbox.start().onTrue(orchestraCommand);
+        Orchestra orchestra = new Orchestra();
+        for (int id : motorIDs) {
+            orchestra.addInstrument(new TalonFX(id));
+        }
 
         xbox.a().onTrue(Commands.runOnce(
-            () -> orchestraCommand.changeSong(songSelector.getSelected())
-        ));
+                () -> orchestra.loadMusic(songSelector.getSelected())    
+            ).andThen(
+                Commands.waitSeconds(0.25)
+            ).andThen(
+                Commands.runOnce(() -> orchestra.play())
+            )  
+        );
 
         xbox.y().onTrue(Commands.runOnce(
-            () -> orchestraCommand.stop()
+            () -> orchestra.stop()      
         ));
     } 
 }
