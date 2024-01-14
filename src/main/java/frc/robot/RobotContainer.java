@@ -2,8 +2,8 @@ package frc.robot;
 
 import java.io.FilenameFilter;
 
-import com.ctre.phoenix.motorcontrol.can.TalonFX;
-import com.ctre.phoenix.music.Orchestra;
+import com.ctre.phoenix6.Orchestra;
+import com.ctre.phoenix6.hardware.TalonFX;
 
 import java.io.File;
 
@@ -46,6 +46,7 @@ public class RobotContainer {
 
     private void setupOrchestra(int... motorIDs) {
         xbox = new CommandXboxController(2);
+        
         Orchestra orchestra = new Orchestra();
         for (int id : motorIDs) {
             orchestra.addInstrument(new TalonFX(id));
